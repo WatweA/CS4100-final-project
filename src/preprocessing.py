@@ -57,9 +57,15 @@ for ticker in tickers:
     df = pd.read_pickle(f"data/etfs/{ticker}.zip")
     # save the ticker's return and volume into market_data
     market_data[f"{ticker}_1DRET"] = (df["Adj Close"] - df["Adj Close"].shift(1)) / df["Adj Close"]
+    market_data[f"{ticker}_1WRET"] = (df["Adj Close"] - df["Adj Close"].shift(5)) / df["Adj Close"]
     market_data[f"{ticker}_1MRET"] = (df["Adj Close"] - df["Adj Close"].shift(21)) / df["Adj Close"]
     market_data[f"{ticker}_6MRET"] = (df["Adj Close"] - df["Adj Close"].shift(126)) / df["Adj Close"]
     market_data[f"{ticker}_1YRET"] = (df["Adj Close"] - df["Adj Close"].shift(252)) / df["Adj Close"]
+    market_data[f"{ticker}_1DAVGRET"] = (market_data[f"{ticker}_1DRET"]).fillna(method="ffill").rolling(5).mean()
+    market_data[f"{ticker}_1WAVGRET"] = (market_data[f"{ticker}_1WRET"]).fillna(method="ffill").rolling(5).mean()
+    market_data[f"{ticker}_1MAVGRET"] = (market_data[f"{ticker}_1MRET"]).fillna(method="ffill").rolling(21).mean()
+    market_data[f"{ticker}_6MAVGRET"] = (market_data[f"{ticker}_6MRET"]).fillna(method="ffill").rolling(21).mean()
+    market_data[f"{ticker}_1YAVGRET"] = (market_data[f"{ticker}_1YRET"]).fillna(method="ffill").rolling(21).mean()
     market_data[f"{ticker}_1DVOL"] = df["Volume"]
     market_data[f"{ticker}_1WVOL"] = df["Volume"].rolling(5).sum()
     market_data[f"{ticker}_1MVOL"] = df["Volume"].rolling(21).sum()
@@ -74,8 +80,11 @@ for alias, indicator in indicators.items():
     else:
         market_data[alias] = df[alias]
 
+print(market_data)
 
 market_data.fillna(method="ffill", inplace=True)
 market_data.dropna(inplace=True)
-market_data = market_data.loc['2008-01-01':'2021-03-01',:]
+market_data = market_data.loc['2008-01-01':'2021-03-01', :]
 market_data.to_pickle("data/market_data.zip")
+
+print(market_data)
