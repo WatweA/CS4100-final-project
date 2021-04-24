@@ -1,90 +1,104 @@
 #!/usr/bin/python
 
-import numpy as np
 import pandas as pd
-
 
 tickers = list([
     "SPY",  # S&P 500 Index Fund
     "IWV",  # Russell 3000 Index Fund
     "QQQ",  # Technology Sector Fund
     "IYF",  # Financials Sector Fund
-    "XRT",  # Consumer Cyclical Sector Fund
+    # "XRT",  # Consumer Cyclical Sector Fund -> remove due to 2006-06-22 start date
     "XLP",  # Consumer Staples Sector Fund
-    "XLU",  # Health Care Sector Funds
+    "XLU",  # Utilities Sector Funds
     "XLV",  # Health Care Sector Funds
-    "IYT",  # Transportation Sector Fund
-    "GLD",  # Precious Metals Sector: Gold
-    "SLV",  # Precious Metals Sector: Silver
-    "MXI",  # Global Materials ETF
+    # "IYT",  # Transportation Sector Fund -> remove due to 2004-01-02 start date
+    # "GLD",  # Precious Metals Sector: Gold -> remove due to 2004-11-18 start date
+    # "SLV",  # Precious Metals Sector: Silver -> remove due to 2006-04-28 start date
+    # "MXI",  # Global Materials ETF -> remove due to 2006-09-22 start date
     "IGE",  # NA Natural Resources ETF
-    "XLE"   # Energy Sector Fund
+    "XLE"  # Energy Sector Fund
 ])
 
 indicators = {
-    "3M_TBILL" : "DTB3",  # 3-Month Treasury Bill: Secondary Market Rate
-    "CPI" : "MEDCPIM158SFRBCLE",  # Median Consumer Price Index
-    "VIX" : "VIXCLS",  # CBOE Volatility Index
-    "INDP" : "INDPRO",  # Industrial Production: Total Index
-    "USHY_ADJ" : "BAMLH0A0HYM2",  # ICE BofA US High Yield Index Option-Adjusted Spread
-    "US_LEADING" : "USSLIND",  # Leading Index for the United States
-    "30Y_FRMTG" : "MORTGAGE30US",  # 30-Year Fixed Rate Mortgage Average in the United States
-    "15Y_FRMTG" : "MORTGAGE15US",  # 15-Year Fixed Rate Mortgage Average in the United States
-    "CPI_URBAN" : "CUSR0000SEHA",  # Consumer Price Index for All Urban Consumers: Rent of Primary Residence in U.S. City Average
-    "RETAIL" : "RSAFS",  # Advance Retail Sales: Retail and Food Services, Total
-    "PHARMA" : "PCU32543254",  # Producer Price Index by Industry: Pharmaceutical and Medicine Manufacturing
-    "UNEMP" : "UNRATE",  # Unemployment Rate
-    "UNEMP_PERM" : "LNS13026638",  # Unemployment Level - Permanent Job Losers
-    "UNEMP_MEN" : "LNS14000001",  # Unemployment Rate - Men
-    "UNEMP_WMN" : "LNS14000002",  # Unemployment Rate - Women
-    "UNEMP_WHT" : "LNS14000003",  # Unemployment Rate - White
-    "UNEMP_BLK" : "LNS14000006",  # Unemployment Rate - Black or African American
-    "UNEMP_HIS" : "LNS14000009",  # Unemployment Rate - Hispanic or Latino
-    "INC" : "PI",  # Personal Income
-    "INC_DISP" : "DSPIC96",  # Real Disposable Personal Income
-    "INC_DISP_PC" : "A229RX0",  # Real Disposable Personal Income: Per Capita
-    "TAX_HIGH" : "IITTRHB",  # U.S Individual Income Tax: Tax Rates for Regular Tax: Highest Bracket
-    "TAX_LOW" : "IITTRLB"   # U.S Individual Income Tax: Tax Rates for Regular Tax: Lowest Bracket
+    "3M_TBILL": "DTB3",  # 3-Month Treasury Bill: Secondary Market Rate
+    "CPI": "MEDCPIM158SFRBCLE",  # Median Consumer Price Index
+    "VIX": "VIXCLS",  # CBOE Volatility Index
+    "INDP": "INDPRO",  # Industrial Production: Total Index
+    "USHY_ADJ": "BAMLH0A0HYM2",  # ICE BofA US High Yield Index Option-Adjusted Spread
+    "US_LEADING": "USSLIND",  # Leading Index for the United States
+    "30Y_FRMTG": "MORTGAGE30US",  # 30-Year Fixed Rate Mortgage Average in the United States
+    "15Y_FRMTG": "MORTGAGE15US",  # 15-Year Fixed Rate Mortgage Average in the United States
+    "CPI_URBAN": "CUSR0000SEHA",  # Consumer Price Index for All Urban Consumers:
+    # Rent of Primary Residence in U.S. City Average
+    "RETAIL": "RSAFS",  # Advance Retail Sales: Retail and Food Services, Total
+    "PHARMA": "PCU32543254",  # Producer Price Index by Industry: Pharmaceutical and Medicine Manufacturing
+    "UNEMP": "UNRATE",  # Unemployment Rate
+    "UNEMP_PERM": "LNS13026638",  # Unemployment Level - Permanent Job Losers
+    "UNEMP_MEN": "LNS14000001",  # Unemployment Rate - Men
+    "UNEMP_WMN": "LNS14000002",  # Unemployment Rate - Women
+    "UNEMP_WHT": "LNS14000003",  # Unemployment Rate - White
+    "UNEMP_BLK": "LNS14000006",  # Unemployment Rate - Black or African American
+    "UNEMP_HIS": "LNS14000009",  # Unemployment Rate - Hispanic or Latino
+    "INC": "PI",  # Personal Income
+    "INC_DISP": "DSPIC96",  # Real Disposable Personal Income
+    "INC_DISP_PC": "A229RX0",  # Real Disposable Personal Income: Per Capita
+    "TAX_HIGH": "IITTRHB",  # U.S Individual Income Tax: Tax Rates for Regular Tax: Highest Bracket
+    "TAX_LOW": "IITTRLB"  # U.S Individual Income Tax: Tax Rates for Regular Tax: Lowest Bracket
 }
 
-
 # initialize dataframe with trading day indices
-dates = pd.date_range(start='1999-01-01', end='2021-03-01', freq="D")
+dates = pd.date_range(start='1998-01-01', end='2021-03-01', freq="D")
 market_data = pd.DataFrame(index=dates)  # trading dates
 
-
+# for ticker in tickers:
 for ticker in tickers:
     df = pd.read_pickle(f"data/etfs/{ticker}.zip")
-    # save the ticker's return and volume into market_data
-    market_data[f"{ticker}_1DRET"] = (df["Adj Close"] - df["Adj Close"].shift(1)) / df["Adj Close"]
-    market_data[f"{ticker}_1WRET"] = (df["Adj Close"] - df["Adj Close"].shift(5)) / df["Adj Close"]
-    market_data[f"{ticker}_1MRET"] = (df["Adj Close"] - df["Adj Close"].shift(21)) / df["Adj Close"]
-    market_data[f"{ticker}_6MRET"] = (df["Adj Close"] - df["Adj Close"].shift(126)) / df["Adj Close"]
-    market_data[f"{ticker}_1YRET"] = (df["Adj Close"] - df["Adj Close"].shift(252)) / df["Adj Close"]
-    market_data[f"{ticker}_1DAVGRET"] = (market_data[f"{ticker}_1DRET"]).fillna(method="ffill").rolling(5).mean()
-    market_data[f"{ticker}_1WAVGRET"] = (market_data[f"{ticker}_1WRET"]).fillna(method="ffill").rolling(5).mean()
-    market_data[f"{ticker}_1MAVGRET"] = (market_data[f"{ticker}_1MRET"]).fillna(method="ffill").rolling(21).mean()
-    market_data[f"{ticker}_6MAVGRET"] = (market_data[f"{ticker}_6MRET"]).fillna(method="ffill").rolling(21).mean()
-    market_data[f"{ticker}_1YAVGRET"] = (market_data[f"{ticker}_1YRET"]).fillna(method="ffill").rolling(21).mean()
-    market_data[f"{ticker}_1DVOL"] = df["Volume"]
-    market_data[f"{ticker}_1WVOL"] = df["Volume"].rolling(5).sum()
-    market_data[f"{ticker}_1MVOL"] = df["Volume"].rolling(21).sum()
+    df["USD Volume"] = df["Adj Close"] * df["Volume"]
+
+    # add the 1-month look-ahead return as a target column
+    market_data[F"{ticker}_TARGET"] = ((df["Adj Close"] - df["Adj Close"].shift(21)) / df["Adj Close"]).shift(-21)
+
+    # establish the rolling windows for both tickers in the pair
+    rolling_1w = df.rolling(10)
+    rolling_1m = df.rolling(21)
+    rolling_3m = df.rolling(63)
+    rolling_6m = df.rolling(126)
+    rolling_1y = df.rolling(252)
+
+    # add the rolling mean returns
+    market_data[f"{ticker}_1D_RET"] = df["Simple Return"]
+    market_data[f"{ticker}_1W_RET"] = rolling_1w["Simple Return"].mean()
+    market_data[f"{ticker}_1M_RET"] = rolling_1w["Simple Return"].mean()
+    market_data[f"{ticker}_3M_RET"] = rolling_1w["Simple Return"].mean()
+    market_data[f"{ticker}_6M_RET"] = rolling_1w["Simple Return"].mean()
+    market_data[f"{ticker}_1Y_RET"] = rolling_1w["Simple Return"].mean()
+
+    # add the rolling volatility ratios
+    market_data[f"{ticker}_1W_STD"] = rolling_1w["Log Return"].std(ddof=0)
+    market_data[f"{ticker}_1M_STD"] = rolling_1m["Log Return"].std(ddof=0)
+    market_data[f"{ticker}_3M_STD"] = rolling_3m["Log Return"].std(ddof=0)
+    market_data[f"{ticker}_6M_STD"] = rolling_6m["Log Return"].std(ddof=0)
+    market_data[f"{ticker}_1Y_STD"] = rolling_1y["Log Return"].std(ddof=0)
+
+    # add the volume in USD
+    market_data[f"{ticker}_1D_VOL"] = df["USD Volume"]
+    market_data[f"{ticker}_1W_VOL"] = rolling_1w["USD Volume"].mean()
+    market_data[f"{ticker}_1M_VOL"] = rolling_1m["USD Volume"].mean()
+    market_data[f"{ticker}_3M_VOL"] = rolling_3m["USD Volume"].mean()
+    market_data[f"{ticker}_6M_VOL"] = rolling_6m["USD Volume"].mean()
+    market_data[f"{ticker}_1Y_VOL"] = rolling_1y["USD Volume"].mean()
 
 for alias, indicator in indicators.items():
     df = pd.read_pickle(f"data/indicators/{indicator}.zip")
     df.columns = [alias]
     # for indicators in the following list, convert the index values to percent change
     to_convert = {"INDP", "CPI_URBAN", "RETAIL", "PHARMA", "INC", "INC_DISP", "INC_DISP_PC"}
-    if alias in to_convert:
-        market_data[alias] = (df[alias] - df[alias].shift(1)) / df[alias]
-    else:
-        market_data[alias] = df[alias]
-
-print(market_data)
+    if alias in to_convert: market_data[alias] = (df[alias] - df[alias].shift(1)) / df[alias]
+    else: market_data[alias] = df[alias]
 
 market_data.fillna(method="ffill", inplace=True)
 market_data.dropna(inplace=True)
-market_data = market_data.loc['2008-01-01':'2021-03-01', :]
+market_data = market_data.loc['2003-01-01':'2020-12-31', :]
 market_data.to_pickle("data/market_data.zip")
 
 print(market_data)
