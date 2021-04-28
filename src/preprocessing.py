@@ -131,16 +131,16 @@ for ticker in tickers:
     market_data[f"{ticker}_1Y_VOL"] = rolling_1y["USD Volume"].mean()
 
     # add the geometric Brownian motion projections
-    market_data[f"{ticker}_1W_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+    market_data[f"{ticker}_1W_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(100) - 1
                                        for mu, sigma in zip(list(market_data[f"{ticker}_1W_RET"]),
                                                             list(market_data[f"{ticker}_1W_STD"]))]
-    market_data[f"{ticker}_1M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+    market_data[f"{ticker}_1M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(100) - 1
                                        for mu, sigma in zip(list(market_data[f"{ticker}_1M_RET"]),
                                                             list(market_data[f"{ticker}_1M_STD"]))]
-    market_data[f"{ticker}_3M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+    market_data[f"{ticker}_3M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(100) - 1
                                        for mu, sigma in zip(list(market_data[f"{ticker}_3M_RET"]),
                                                             list(market_data[f"{ticker}_3M_STD"]))]
-    market_data[f"{ticker}_6M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+    market_data[f"{ticker}_6M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(100) - 1
                                        for mu, sigma in zip(list(market_data[f"{ticker}_6M_RET"]),
                                                             list(market_data[f"{ticker}_6M_STD"]))]
 
