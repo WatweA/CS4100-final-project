@@ -1,6 +1,46 @@
 #!/usr/bin/python
 
+import numpy as np
 import pandas as pd
+
+
+class GeometricBrownianMotion:
+    """
+    A class to implement a GBM model with given drift, volatility, time span,
+    """
+
+    def __init__(self, s0, mu, sigma, T=1, dt=0.01):
+        self.s0 = s0  # the starting level/price
+        self.mu = mu  # drift/expected return component
+        self.sigma = sigma  # volatility component
+        self.T = T  # time span over which to simulate
+        self.dt = dt  # number of steps to simulate (i.e. the granularity for simulation over T)
+        self.N = int(T / dt)  # the number of total simulation steps
+
+    def simulate(self):
+        """
+        simulate GBM and return the prices over time as an array
+        :return: a Numpy array of prices for this simulated price motion
+        """
+        ticks = np.linspace(0, self.T, num=self.N)
+        # calculate standard Brownian motion over the tick-space
+        W = np.random.standard_normal(size=self.N)
+        W = np.cumsum(W) * np.sqrt(self.dt)
+        # geometric Brownian motion over the tick-space
+        X = (self.mu - (self.sigma ** 2) / 2) * ticks + self.sigma * W
+        return np.array(self.s0 * np.exp(X))
+
+    def simulate_average_sT(self, n_simulations):
+        """
+        Return the average final price sT for this GBM over a given number of simulations
+        :param n_simulations: the number of simulations to run
+        :return: the average ending price, sT
+        """
+        sT = 0.0
+        for i in range(n_simulations):
+            sT += self.simulate()[-1]
+        return sT / n_simulations
+
 
 tickers = list([
     "SPY",  # S&P 500 Index Fund
@@ -46,9 +86,11 @@ indicators = {
     "TAX_LOW": "IITTRLB"  # U.S Individual Income Tax: Tax Rates for Regular Tax: Lowest Bracket
 }
 
+
 # initialize dataframe with trading day indices
 dates = pd.date_range(start='1998-01-01', end='2021-03-01', freq="D")
 market_data = pd.DataFrame(index=dates)  # trading dates
+
 
 # for ticker in tickers:
 for ticker in tickers:
@@ -88,13 +130,30 @@ for ticker in tickers:
     market_data[f"{ticker}_6M_VOL"] = rolling_6m["USD Volume"].mean()
     market_data[f"{ticker}_1Y_VOL"] = rolling_1y["USD Volume"].mean()
 
+    # add the geometric Brownian motion projections
+    market_data[f"{ticker}_1W_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+                                       for mu, sigma in zip(list(market_data[f"{ticker}_1W_RET"]),
+                                                            list(market_data[f"{ticker}_1W_STD"]))]
+    market_data[f"{ticker}_1M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+                                       for mu, sigma in zip(list(market_data[f"{ticker}_1M_RET"]),
+                                                            list(market_data[f"{ticker}_1M_STD"]))]
+    market_data[f"{ticker}_3M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+                                       for mu, sigma in zip(list(market_data[f"{ticker}_3M_RET"]),
+                                                            list(market_data[f"{ticker}_3M_STD"]))]
+    market_data[f"{ticker}_6M_GBM"] = [GeometricBrownianMotion(1, mu, sigma).simulate_average_sT(500) - 1
+                                       for mu, sigma in zip(list(market_data[f"{ticker}_6M_RET"]),
+                                                            list(market_data[f"{ticker}_6M_STD"]))]
+
+
 for alias, indicator in indicators.items():
     df = pd.read_pickle(f"data/indicators/{indicator}.zip")
     df.columns = [alias]
     # for indicators in the following list, convert the index values to percent change
     to_convert = {"INDP", "CPI_URBAN", "RETAIL", "PHARMA", "INC", "INC_DISP", "INC_DISP_PC"}
-    if alias in to_convert: market_data[alias] = (df[alias] - df[alias].shift(1)) / df[alias]
-    else: market_data[alias] = df[alias]
+    if alias in to_convert:
+        market_data[alias] = (df[alias] - df[alias].shift(1)) / df[alias]
+    else:
+        market_data[alias] = df[alias]
 
 market_data.fillna(method="ffill", inplace=True)
 market_data.dropna(inplace=True)
